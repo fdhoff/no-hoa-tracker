@@ -4,37 +4,38 @@ What I'd build next, ranked by value-per-hour. Open to redirection.
 
 ---
 
-## Open questions for the user
+## Investor lens (current criteria)
 
-A few inputs would let me tighten the scraper and the UI without guessing:
+- **No HOA** (hard requirement)
+- **3-5 bedrooms**
+- **$250K minimum**, no maximum
+- **Target: 10-12% ROI + appreciation potential**
 
-- **Max price?** Right now we pull $2M+ luxury homes that probably aren't relevant. Add a max to `REGIONS` config in `scrape.js`.
-- **TN cities?** State-wide TN is 200+ listings, too broad. If you have specific targets (Nashville, Knoxville, Chattanooga, Murfreesboro, etc.), I'd swap the state-level pull for city-level pulls — fewer listings, all relevant.
-- **Bedroom / sqft minimums?** Same idea — pre-filter at scrape time so the tracker isn't full of studios or 700sqft cottages.
+Current scraped regions: Henderson NV + 8 TN cities (Nashville, Knoxville, Memphis, Chattanooga, Murfreesboro, Clarksville, Franklin, Spring Hill). 888 listings as of last scrape.
 
-Drop a comment in this file or just answer in chat and I'll wire it up.
+**ROI scoring is heuristic only** — Redfin doesn't return rent estimates. We surface $/sqft, $/bed, and days-on-market as proxies. Real ROI math needs a rent data source (Zillow Rent Zestimate, Rentometer, etc.) — see #1 below.
 
 ---
 
 ## Soon (high value, small)
 
-1. **Photos on cards.** The Redfin API already returns a `photos` array; we discard it. Storing the primary photo URL and rendering it as the card's background or a thumbnail strip makes the tracker stop looking like a database dump. ~1 hour.
+1. **Rent estimates → real ROI numbers.** Without rent data the "10-12% ROI" criterion is unenforceable. Options: scrape Zillow's Rent Zestimate per listing (one HTTP call per address, fragile), use Rentometer's API ($30-50/mo), or roll our own with rent-comp data from Realtor.com. Once we have rent, compute cap rate and gross yield per listing, sort/filter by ROI. ~3-4 hours plus data source signup.
 
-2. **Quick-action buttons on cards.** With 227 listings to triage, opening the modal for every status change is tedious. Add inline buttons on each card: `✓ Confirmed no-HOA`, `✗ Has HOA`, `Pass`, `Interested`. ~1 hour.
+2. **Photos on cards.** The Redfin API returns a `photos.value` field with cryptic IDs (`"0-52:0"`) and `alternatePhotosInfo.groupCode` — but the actual CDN URL pattern isn't trivially constructable. The listing detail pages return 405 to direct curl, so we can't easily scrape `<meta property="og:image">`. Realistic path: use a headless-browser scraper (Playwright) for the photo URL on first ingest, or pay for an API that returns photos directly. ~2-3 hours with Playwright.
 
-3. **Scraper price/beds/sqft filters.** Add `max_price`, `min_beds`, `min_sqft` to `REGIONS` config. Right now the scraper pulls everything and we filter visually. ~30 min once the user provides the numbers.
+3. **Off-market detection.** When the scraper runs and a tracked `redfin:<id>` is no longer in the result set, mark `status='off-market'` (new status). Otherwise sold/delisted homes accumulate. ~1 hour.
 
-4. **Listing freshness.** Show "listed 3 days ago" / "price dropped" badges. Redfin returns `dom` (days on market) and `originalListPrice` — we just need to store and display them. ~1 hour.
+4. **Appreciation signal.** Pull each region's median price trend (Redfin has a `region/snapshot` endpoint) and surface a "this neighborhood is up X% YoY" badge per listing. ~2 hours.
 
 ---
 
 ## Soon-ish (high value, medium)
 
-5. **Map view.** `latLong.value` is already in the scraper response — drop in Leaflet, plot the listings, color by status. Especially useful for Tennessee where the user hasn't picked a city yet — the map shows where homes cluster. ~2-3 hours.
+5. **Map view.** `latLong.value` is already in the scraper response (we just don't store it yet — small schema add). Drop in Leaflet, plot the 888 listings, color by status. Lets the user see where listings cluster across TN. ~2-3 hours.
 
-6. **Off-market detection.** When the scraper runs and a previously-tracked MLS# is no longer in the result, mark it `status: 'off-market'` (new status to add) so it stops appearing in active filters. Otherwise stale listings accumulate forever. ~1 hour.
+6. **More regions config.** Currently hardcoded in `scrape.js`. Move to a `regions.json` with friendly fields (label, type=city/state/zip, ID), and add an in-UI region picker tied to the same source. ~2 hours.
 
-7. **More regions.** Currently hardcoded in `scrape.js`. Move to a `regions.json` config file with friendly fields (label, type=city/state/zip, search params), and add an in-UI region picker tied to the same source. ~2 hours.
+7. **Bulk-triage UI.** With 888 listings, even quick-actions per card is slow. A "swipe deck" or keyboard-driven bulk review (`j`/`k` to nav, `i`/`p` to interested/pass) would let the user blast through. ~2 hours.
 
 ---
 

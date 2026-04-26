@@ -355,6 +355,40 @@ button.danger:hover {
   color: var(--text-dim);
 }
 
+.card-roi {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.card-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
+
+.qa-btn {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.qa-btn:hover { background: var(--border); color: var(--text); }
+.qa-interested:hover { border-color: var(--accent); color: var(--accent); }
+.qa-pass:hover { border-color: var(--text-dim); color: var(--text); }
+.qa-confirm-no-hoa:hover { border-color: var(--success); color: var(--success); }
+.qa-has-hoa:hover { border-color: var(--danger); color: var(--danger); }
+
 .card-footer {
   display: flex;
   justify-content: flex-start;

@@ -28,14 +28,22 @@ db.exec(`
     hoaConfirmed TEXT,
     notes TEXT,
     dateAdded INTEGER,
-    lastChecked INTEGER
+    lastChecked INTEGER,
+    dom INTEGER
   );
   CREATE INDEX IF NOT EXISTS idx_listings_mls ON listings(mls);
   CREATE INDEX IF NOT EXISTS idx_listings_state ON listings(state);
   CREATE INDEX IF NOT EXISTS idx_listings_status ON listings(status);
 `);
 
-const COLS = ['id', 'mls', 'address', 'city', 'state', 'status', 'price', 'beds', 'baths', 'sqft', 'lotSize', 'yearBuilt', 'url', 'hoaConfirmed', 'notes', 'dateAdded', 'lastChecked'];
+// Schema migrations — additive only. New columns get added if missing.
+function ensureColumn(name, type) {
+  const cols = db.prepare(`PRAGMA table_info(listings)`).all().map(c => c.name);
+  if (!cols.includes(name)) db.exec(`ALTER TABLE listings ADD COLUMN ${name} ${type}`);
+}
+ensureColumn('dom', 'INTEGER');
+
+const COLS = ['id', 'mls', 'address', 'city', 'state', 'status', 'price', 'beds', 'baths', 'sqft', 'lotSize', 'yearBuilt', 'url', 'hoaConfirmed', 'notes', 'dateAdded', 'lastChecked', 'dom'];
 
 const stmts = {
   list: db.prepare('SELECT * FROM listings ORDER BY dateAdded DESC'),

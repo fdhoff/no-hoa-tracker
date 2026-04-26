@@ -248,6 +248,11 @@ function renderStats() {
   `;
 }
 
+function pricePerBed(l) {
+  if (!l.price || !l.beds) return null;
+  return l.price / l.beds;
+}
+
 function renderListings() {
   const filtered = getFiltered();
   if (!filtered.length) {
@@ -257,13 +262,18 @@ function renderListings() {
 
   els.listings.innerHTML = filtered.map(l => {
     const ppsf = pricePerSqft(l);
+    const ppb = pricePerBed(l);
     const specs = [
       l.beds != null && l.beds !== '' ? `${l.beds} bd` : null,
       l.baths != null && l.baths !== '' ? `${l.baths} ba` : null,
       l.sqft ? `${Number(l.sqft).toLocaleString()} sqft` : null,
       l.lotSize ? `${l.lotSize} ac` : null,
       l.yearBuilt ? `Built ${l.yearBuilt}` : null,
+    ].filter(Boolean);
+    const roiSpecs = [
       ppsf ? `$${ppsf.toFixed(0)}/sqft` : null,
+      ppb ? `$${Math.round(ppb / 1000)}k/bed` : null,
+      l.dom != null ? `${l.dom}d on market` : null,
     ].filter(Boolean);
 
     return `
@@ -279,11 +289,18 @@ function renderListings() {
           </div>
         </div>
         <div class="card-specs">${specs.map(s => `<span>${s}</span>`).join('')}</div>
-        ${l.notes ? `<div class="card-notes">${escapeHtml(l.notes)}</div>` : ''}
+        ${roiSpecs.length ? `<div class="card-roi">${roiSpecs.map(s => `<span>${s}</span>`).join('')}</div>` : ''}
+        ${l.notes && !l.notes.startsWith('Auto-imported') ? `<div class="card-notes">${escapeHtml(l.notes)}</div>` : ''}
         <div class="card-footer">
           <span class="badge badge-${l.status}">${STATUS_LABELS[l.status] || l.status}</span>
           <span class="hoa-flag hoa-${l.hoaConfirmed || 'unverified'}">${hoaLabel(l.hoaConfirmed)}</span>
           ${l.lastChecked ? `<span class="checked-date">checked ${fmtDate(l.lastChecked)}</span>` : ''}
+        </div>
+        <div class="card-actions" data-noedit>
+          <button class="qa-btn qa-interested" data-action="interested" title="Mark Interested">★</button>
+          <button class="qa-btn qa-pass" data-action="pass" title="Pass">⊘</button>
+          <button class="qa-btn qa-confirm-no-hoa" data-action="confirm-no-hoa" title="Confirm no HOA">✓ no HOA</button>
+          <button class="qa-btn qa-has-hoa" data-action="has-hoa" title="Has HOA → pass">✗ HOA</button>
         </div>
       </div>
     `;
@@ -295,6 +312,33 @@ function renderListings() {
       openModal(card.dataset.id);
     });
   });
+
+  els.listings.querySelectorAll('.qa-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const card = btn.closest('.card');
+      handleQuickAction(card.dataset.id, btn.dataset.action);
+    });
+  });
+}
+
+async function handleQuickAction(id, action) {
+  const idx = listings.findIndex(l => l.id === id);
+  if (idx === -1) return;
+  const l = listings[idx];
+  const updates = { lastChecked: Date.now() };
+  if (action === 'interested') updates.status = 'interested';
+  else if (action === 'pass') updates.status = 'passed';
+  else if (action === 'confirm-no-hoa') updates.hoaConfirmed = 'yes';
+  else if (action === 'has-hoa') { updates.hoaConfirmed = 'has-hoa'; updates.status = 'passed'; }
+  const updated = { ...l, ...updates };
+  listings[idx] = updated;
+  render();
+  try {
+    await Storage.upsert(updated);
+  } catch (err) {
+    alert('Quick action failed: ' + err.message);
+  }
 }
 
 function redfinLabel(url) {
