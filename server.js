@@ -42,8 +42,10 @@ function ensureColumn(name, type) {
   if (!cols.includes(name)) db.exec(`ALTER TABLE listings ADD COLUMN ${name} ${type}`);
 }
 ensureColumn('dom', 'INTEGER');
+ensureColumn('estRent', 'REAL');
+ensureColumn('roi', 'REAL');
 
-const COLS = ['id', 'mls', 'address', 'city', 'state', 'status', 'price', 'beds', 'baths', 'sqft', 'lotSize', 'yearBuilt', 'url', 'hoaConfirmed', 'notes', 'dateAdded', 'lastChecked', 'dom'];
+const COLS = ['id', 'mls', 'address', 'city', 'state', 'status', 'price', 'beds', 'baths', 'sqft', 'lotSize', 'yearBuilt', 'url', 'hoaConfirmed', 'notes', 'dateAdded', 'lastChecked', 'dom', 'estRent', 'roi'];
 
 const stmts = {
   list: db.prepare('SELECT * FROM listings ORDER BY dateAdded DESC'),

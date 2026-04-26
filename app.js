@@ -195,6 +195,9 @@ function getFiltered() {
     if (field === 'pricePerSqft') {
       av = pricePerSqft(a) ?? Infinity;
       bv = pricePerSqft(b) ?? Infinity;
+    } else if (field === 'roi') {
+      av = a.roi ?? -Infinity;
+      bv = b.roi ?? -Infinity;
     } else {
       av = a[field] ?? (dir === 'asc' ? Infinity : -Infinity);
       bv = b[field] ?? (dir === 'asc' ? Infinity : -Infinity);
@@ -270,12 +273,13 @@ function renderListings() {
       l.lotSize ? `${l.lotSize} ac` : null,
       l.yearBuilt ? `Built ${l.yearBuilt}` : null,
     ].filter(Boolean);
+
     const roiSpecs = [
       ppsf ? `$${ppsf.toFixed(0)}/sqft` : null,
       ppb ? `$${Math.round(ppb / 1000)}k/bed` : null,
       l.dom != null ? `${l.dom}d on market` : null,
+      l.roi != null ? `<strong>${l.roi}% ROI</strong>` : null,
     ].filter(Boolean);
-
     return `
       <div class="card" data-id="${l.id}">
         <div class="card-header">

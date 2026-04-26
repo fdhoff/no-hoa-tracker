@@ -32,6 +32,11 @@ const REGIONS = [
   // Nevada
   { label: 'Henderson, NV',     region_id: 8147,  region_type: 6, max_homes: 350 },
 
+  // Tennessee — Mountain Cabin Markets (High STR Yield)
+  { label: 'Sevierville, TN',   region_id: 17315, region_type: 6, max_homes: 350 },
+  { label: 'Gatlinburg, TN',    region_id: 7311,  region_type: 6, max_homes: 350 },
+  { label: 'Pigeon Forge, TN',  region_id: 14931, region_type: 6, max_homes: 350 },
+
   // Tennessee — major metros
   { label: 'Nashville, TN',     region_id: 13415, region_type: 6, max_homes: 350 },
   { label: 'Knoxville, TN',     region_id: 10200, region_type: 6, max_homes: 350 },
@@ -114,15 +119,28 @@ function mapHome(home, regionLabel) {
 
   const fullUrl = home.url ? `https://www.redfin.com${home.url}` : null;
 
+  const price = home.price && home.price.value || null;
+  const beds = home.beds || null;
+  const state = home.state || null;
+
+  // ROI Heuristic
+  let estRent = null;
+  let roi = null;
+  if (state === 'TN' && beds && price) {
+    estRent = beds * 25000;
+    const netIncome = estRent * 0.55; // 45% OpEx
+    roi = Math.round((netIncome / price) * 1000) / 10;
+  }
+
   return {
     id: `redfin:${home.propertyId}`,
     mls: home.mlsId && home.mlsId.value ? home.mlsId.value : null,
     address: home.streetLine && home.streetLine.value ? home.streetLine.value : null,
     city: home.city || null,
-    state: home.state || null,
+    state,
     status: 'reviewed',
-    price: home.price && home.price.value || null,
-    beds: home.beds || null,
+    price,
+    beds,
     baths: home.baths || null,
     sqft: home.sqFt && home.sqFt.value || null,
     lotSize: lotSizeAcres,
@@ -133,6 +151,8 @@ function mapHome(home, regionLabel) {
     dateAdded: Date.now(),
     lastChecked: Date.now(),
     dom: home.dom && home.dom.value || null,
+    estRent,
+    roi,
   };
 }
 
@@ -146,12 +166,14 @@ async function main() {
       id TEXT PRIMARY KEY, mls TEXT, address TEXT, city TEXT, state TEXT, status TEXT,
       price REAL, beds REAL, baths REAL, sqft REAL, lotSize REAL, yearBuilt INTEGER,
       url TEXT, hoaConfirmed TEXT, notes TEXT, dateAdded INTEGER, lastChecked INTEGER,
-      dom INTEGER
+      dom INTEGER, estRent REAL, roi REAL
     );
   `);
   // Best-effort migration for older DBs created by an earlier scrape.
   const cols = db.prepare(`PRAGMA table_info(listings)`).all().map(c => c.name);
   if (!cols.includes('dom')) db.exec('ALTER TABLE listings ADD COLUMN dom INTEGER');
+  if (!cols.includes('estRent')) db.exec('ALTER TABLE listings ADD COLUMN estRent REAL');
+  if (!cols.includes('roi')) db.exec('ALTER TABLE listings ADD COLUMN roi REAL');
 
   // Clean up auto-imported listings that the user hasn't engaged with yet.
   // This drops anything previously scraped that no longer matches the new
@@ -166,7 +188,7 @@ async function main() {
   if (purged.changes) console.log(`Purged ${purged.changes} stale auto-imports before re-scrape.`);
 
   // Fields the scraper owns and should refresh on every run (price changes, etc.).
-  const SCRAPER_FIELDS = ['price', 'beds', 'baths', 'sqft', 'lotSize', 'yearBuilt', 'url', 'lastChecked', 'dom'];
+  const SCRAPER_FIELDS = ['price', 'beds', 'baths', 'sqft', 'lotSize', 'yearBuilt', 'url', 'lastChecked', 'dom', 'estRent', 'roi'];
   const ALL_FIELDS = ['id', 'mls', 'address', 'city', 'state', 'status', 'hoaConfirmed', 'notes', 'dateAdded', ...SCRAPER_FIELDS];
 
   const insertNew = db.prepare(`
