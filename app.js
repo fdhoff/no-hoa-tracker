@@ -3,7 +3,7 @@ const SCHEMA_VERSION = 2;
 
 // Pinned regions get one-click Redfin browse links. Edit to taste.
 const PINNED_REGIONS = [
-  { label: 'Henderson, NV', url: 'https://www.redfin.com/city/8903/NV/Henderson' },
+  { label: 'Henderson, NV', url: 'https://www.redfin.com/city/8147/NV/Henderson' },
   { label: 'Tennessee', url: 'https://www.redfin.com/state/Tennessee' },
 ];
 

@@ -38,6 +38,22 @@ Reviewed → Interested → Contacted → Viewed in Person → Offer → Under C
 
 Default for a new entry is *Reviewed* — meaning "looked at it, no action yet." HOA flag is separate from status (`confirmed no-HOA` / `unverified` / `has-HOA`) so you record what you've actually verified vs. what the listing claims.
 
+## Auto-populating from Redfin
+
+```
+npm run scrape
+```
+
+Hits Redfin's internal search API for the configured regions, filters for no-HOA, and inserts new listings into the SQLite DB. Listings get a deterministic ID (`redfin:<propertyId>`) so re-running won't duplicate. Listings already tracked by MLS# are skipped, so user-edited fields (status, notes) are never overwritten.
+
+Default regions are Henderson, NV (city) and Tennessee (state). Edit the `REGIONS` array in `scrape.js` to change scope. To find a region ID for a new city, browse to the Redfin search page for it (e.g. `https://www.redfin.com/city/<id>/<state>/<name>`) — the ID is in the URL.
+
+**Caveats:**
+- The Redfin API is undocumented and can change without warning.
+- All scraped listings are flagged `hoaConfirmed: 'unverified'`. Redfin rarely returns `hoa: 0` explicitly — they just omit the field for no-HOA homes. Verify HOA status before trusting it.
+- Region IDs in Redfin's URLs (e.g. `8147` for Henderson) are sometimes different from old paths — the public URL `redfin.com/city/8903/NV/Henderson` now redirects to Houston, TX. The scraper's IDs were re-verified 2026-04.
+- No rate limiting beyond a 1-second pause between regions. Don't run on a tight cron loop.
+
 ## Architecture
 
 - **`server.js`** — Node/Express + better-sqlite3. Serves the static frontend on port 8000 and exposes a tiny REST API:

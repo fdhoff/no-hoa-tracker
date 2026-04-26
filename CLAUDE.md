@@ -24,6 +24,7 @@ The server **must be running on `http://localhost`** for the bookmarklet flow to
 | `index.html` / `styles.css` | UI. Dark-themed grid of listing cards + modal form. |
 | `bookmarklet.html` | Install page for the Redfin scraper bookmarklet. Configurable tracker URL, generates the `javascript:` href on the fly. |
 | `bookmarklet-src.js` | Readable source of the bookmarklet (kept in sync with the minified inline version in `bookmarklet.html`). |
+| `scrape.js` | Bulk Redfin scraper. Fetches the stingray search API for configured regions and inserts no-HOA listings directly into SQLite. Run with `npm run scrape`. |
 | `data/listings.db` | SQLite database (gitignored, created on first server run). |
 
 ## Data shape
@@ -77,10 +78,22 @@ POST /api/listings/bulk      -> {inserted: number}   (transactional)
 - **Local over cloud.** They picked SQLite over Supabase for the backend. Don't suggest cloud-hosted alternatives unless asked.
 - **Redfin first.** Redfin is the canonical browsing platform. Zillow / Realtor.com integrations are not on the roadmap unless the user asks.
 
+## Redfin scraper (scrape.js)
+
+Hits Redfin's undocumented `stingray/api/gis` endpoint. Things to know:
+
+- **Region IDs in this API ≠ URL slug IDs.** The URL `redfin.com/city/<id>/...` uses one ID space; Redfin sometimes recycles old IDs to point to different places. We verified Henderson, NV is `8147` (was previously thought to be `8903`, which now points to Houston, TX). Tennessee state is `34`. Find new IDs by visiting the Redfin search page in a browser, then inspecting the network tab's `/stingray/api/gis` request.
+- **`hoa=0` URL filter does NOT actually filter.** We pull listings and post-filter in JS based on `home.hoa.value`. Listings without an `hoa` field at all are kept and flagged `unverified`.
+- **Response is `{}&&{json}`.** Strip the 4-char prefix before parsing.
+- **The `url` field is a relative path** like `/NV/Henderson/.../home/123` — prepend `https://www.redfin.com`.
+- **Deterministic IDs:** scraped listings get `id = 'redfin:<propertyId>'`. Re-running the scraper produces the same IDs, so `INSERT OR IGNORE` skips duplicates and the user's edits to existing rows are preserved.
+- **MLS-based dedup:** before inserting, the script also checks the existing MLS# set, so an already-tracked listing (even one added manually) won't be duplicated.
+
 ## Known unfinished directions (discussed but not built)
 
-- **Auto-populated listings via paid API.** RapidAPI's Realtor endpoint or ATTOM was discussed as a way to skip manual entry. Not wired up. If the user picks this up, the ingest path is `Storage.bulkUpsert(items)`.
-- **Map view + photos.** Once listings have lat/lng + image URLs (which would come from a listings API), Leaflet/Mapbox + a photo grid would be the natural next step.
+- **Paid listings API as alternative to scraping.** RapidAPI Realtor or ATTOM would be more stable and ToS-clean if the scraper proves too fragile. Not wired up.
+- **Map view + photos.** Listings have lat/lng (`latLong.value`) and `photos` already from the scraper — Leaflet/Mapbox + a photo grid is the natural next step.
+- **Scheduled scraping.** Currently manual via `npm run scrape`. Could run via cron / launchd. User explicitly didn't want this on a "tight loop" — daily is the right cadence if scheduled.
 - **Mobile / PWA.** Discussed as a use-it-from-the-car upgrade, not implemented.
 
 ## Testing
