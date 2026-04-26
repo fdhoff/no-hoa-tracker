@@ -26,17 +26,43 @@ const CRITERIA = {
 };
 
 // Each city query is independently capped at 350 results, so a list of cities
-// pulls more candidates than a single state-wide query.
+// pulls more candidates than a single state-wide query. State-wide TN runs
+// last as a catch-all for smaller metros not explicitly listed.
 const REGIONS = [
-  { label: 'Henderson, NV',    region_id: 8147,  region_type: 6, max_homes: 350 },
-  { label: 'Nashville, TN',    region_id: 13415, region_type: 6, max_homes: 350 },
-  { label: 'Knoxville, TN',    region_id: 10200, region_type: 6, max_homes: 350 },
-  { label: 'Memphis, TN',      region_id: 12260, region_type: 6, max_homes: 350 },
-  { label: 'Chattanooga, TN',  region_id: 3641,  region_type: 6, max_homes: 350 },
-  { label: 'Murfreesboro, TN', region_id: 13284, region_type: 6, max_homes: 350 },
-  { label: 'Clarksville, TN',  region_id: 3918,  region_type: 6, max_homes: 350 },
-  { label: 'Franklin, TN',     region_id: 7080,  region_type: 6, max_homes: 350 },
-  { label: 'Spring Hill, TN',  region_id: 18036, region_type: 6, max_homes: 350 },
+  // Nevada
+  { label: 'Henderson, NV',     region_id: 8147,  region_type: 6, max_homes: 350 },
+
+  // Tennessee — major metros
+  { label: 'Nashville, TN',     region_id: 13415, region_type: 6, max_homes: 350 },
+  { label: 'Knoxville, TN',     region_id: 10200, region_type: 6, max_homes: 350 },
+  { label: 'Memphis, TN',       region_id: 12260, region_type: 6, max_homes: 350 },
+  { label: 'Chattanooga, TN',   region_id: 3641,  region_type: 6, max_homes: 350 },
+  { label: 'Murfreesboro, TN',  region_id: 13284, region_type: 6, max_homes: 350 },
+  { label: 'Clarksville, TN',   region_id: 3918,  region_type: 6, max_homes: 350 },
+
+  // Tennessee — Nashville metro suburbs
+  { label: 'Franklin, TN',      region_id: 7080,  region_type: 6, max_homes: 350 },
+  { label: 'Spring Hill, TN',   region_id: 18036, region_type: 6, max_homes: 350 },
+  { label: 'Brentwood, TN',     region_id: 2149,  region_type: 6, max_homes: 350 },
+  { label: 'Hendersonville, TN',region_id: 8509,  region_type: 6, max_homes: 350 },
+  { label: 'Mount Juliet, TN',  region_id: 13070, region_type: 6, max_homes: 350 },
+  { label: 'Smyrna, TN',        region_id: 17754, region_type: 6, max_homes: 350 },
+  { label: 'Lebanon, TN',       region_id: 10584, region_type: 6, max_homes: 350 },
+  { label: 'Gallatin, TN',      region_id: 7278,  region_type: 6, max_homes: 350 },
+  { label: 'Nolensville, TN',   region_id: 13801, region_type: 6, max_homes: 350 },
+  { label: 'Columbia, TN',      region_id: 4308,  region_type: 6, max_homes: 350 },
+
+  // Tennessee — Memphis metro suburbs
+  { label: 'Collierville, TN',  region_id: 4272,  region_type: 6, max_homes: 350 },
+  { label: 'Germantown, TN',    region_id: 7371,  region_type: 6, max_homes: 350 },
+
+  // Tennessee — East TN
+  { label: 'Maryville, TN',     region_id: 11830, region_type: 6, max_homes: 350 },
+  { label: 'Johnson City, TN',  region_id: 9725,  region_type: 6, max_homes: 350 },
+
+  // Catch-all for any TN markets not covered above (Cookeville, Jackson,
+  // Kingsport, Bristol, Cleveland, etc.) — caps at 350 statewide.
+  { label: 'Tennessee (state)', region_id: 34,    region_type: 4, max_homes: 350 },
 ];
 
 const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15';
