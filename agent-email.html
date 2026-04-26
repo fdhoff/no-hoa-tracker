@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Agent Email Drafter — No-HOA Tracker</title>
+<link rel="stylesheet" href="styles.css" />
+<style>
+  .ae-container { max-width: 1080px; margin: 0 auto; padding: 32px 24px; }
+  .ae-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; gap: 16px; flex-wrap: wrap; }
+  .ae-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  @media (max-width: 800px) { .ae-grid { grid-template-columns: 1fr; } }
+
+  .ae-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; }
+  .ae-section-label { font-size: 11px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.15em; margin: 0 0 12px; }
+  .ae-field { margin-bottom: 14px; }
+  .ae-field label { display: block; font-size: 11px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.05em; }
+  .ae-field input { width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 9px 12px; border-radius: 8px; font-size: 14px; font-family: inherit; }
+  .ae-field input:focus { outline: none; border-color: var(--accent); }
+  .ae-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  .ae-region-row { display: flex; gap: 6px; }
+  .ae-region-btn { flex: 1; padding: 10px 8px; border: 2px solid var(--border); background: transparent; color: var(--text-dim); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; border-radius: 10px; cursor: pointer; transition: all 0.15s; }
+  .ae-region-btn:hover { border-color: rgba(68, 147, 248, 0.4); }
+  .ae-region-btn.active { border-color: var(--accent); background: var(--accent); color: #fff; }
+
+  .ae-submit { display: block; width: 100%; text-align: center; padding: 14px; border-radius: 10px; background: var(--accent); color: #fff; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em; font-size: 12px; text-decoration: none; transition: background 0.15s; margin-top: 16px; }
+  .ae-submit:hover { background: var(--accent-hover); text-decoration: none; }
+  .ae-submit-hint { font-size: 11px; color: var(--text-dim); text-align: center; font-style: italic; margin-top: 8px; }
+
+  .ae-preview { position: relative; min-height: 380px; }
+  .ae-copy { position: absolute; top: 16px; right: 16px; padding: 5px 10px; background: var(--surface-2); color: var(--text); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; border: 1px solid var(--border); border-radius: 6px; cursor: pointer; }
+  .ae-copy:hover { background: var(--border); }
+  .ae-preview-subject-label, .ae-preview-body-label { font-size: 10px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.1em; display: block; margin-top: 8px; }
+  .ae-preview-subject { font-size: 14px; font-weight: 600; color: var(--text); margin-top: 4px; }
+  .ae-preview-divider { height: 1px; background: var(--border); margin: 14px 0; }
+  .ae-preview-body { font-size: 13px; color: var(--text); white-space: pre-wrap; line-height: 1.55; margin-top: 6px; }
+
+  .ae-links { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 24px; }
+  @media (max-width: 700px) { .ae-links { grid-template-columns: 1fr; } }
+  .ae-link-box { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px; text-decoration: none; color: var(--text); transition: border-color 0.15s; }
+  .ae-link-box:hover { border-color: var(--accent); text-decoration: none; }
+  .ae-link-box h3 { margin: 0 0 4px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; }
+  .ae-link-box p { margin: 0; font-size: 11px; color: var(--text-dim); }
+</style>
+</head>
+<body>
+  <div class="ae-container">
+    <div class="ae-header">
+      <a href="index.html" class="back" style="color: var(--text-dim); font-size: 14px; text-decoration: none;">← back to tracker</a>
+      <h1 style="margin: 0; font-size: 22px;">Agent Email Drafter</h1>
+      <span class="badge" style="background: rgba(139,148,158,0.2); color: var(--text-dim);">Property Outreach</span>
+    </div>
+
+    <div class="ae-grid">
+      <section class="ae-panel">
+        <h2 class="ae-section-label">Listing Details</h2>
+
+        <div class="ae-field">
+          <label>Target Region</label>
+          <div class="ae-region-row" id="region-buttons"></div>
+        </div>
+
+        <div class="ae-field">
+          <label>Property Address</label>
+          <input id="address" type="text" placeholder="123 Main St, Henderson..." />
+        </div>
+
+        <div class="ae-row">
+          <div class="ae-field">
+            <label>Agent Name</label>
+            <input id="agent-name" type="text" placeholder="Optional" />
+          </div>
+          <div class="ae-field">
+            <label>Agent Email</label>
+            <input id="agent-email" type="email" placeholder="Optional" />
+          </div>
+        </div>
+
+        <a id="mailto" class="ae-submit" href="#">Draft Email to Agent</a>
+        <p id="hint" class="ae-submit-hint"></p>
+      </section>
+
+      <section>
+        <h2 class="ae-section-label" style="padding: 0 8px;">Draft Preview</h2>
+        <div class="ae-panel ae-preview">
+          <button id="copy-btn" class="ae-copy">Copy Text</button>
+          <span class="ae-preview-subject-label">Subject</span>
+          <p id="preview-subject" class="ae-preview-subject"></p>
+          <div class="ae-preview-divider"></div>
+          <span class="ae-preview-body-label">Message</span>
+          <div id="preview-body" class="ae-preview-body"></div>
+        </div>
+      </section>
+    </div>
+
+    <section class="ae-links" id="quick-links"></section>
+  </div>
+
+  <script>
+    const REGIONS = {
+      'Henderson, NV': {
+        specifics: 'I am specifically verifying the 1,000ft separation requirement for Short-Term Rental permits in Henderson. Has a proximity study been done, or do you know of any active STR permits within the immediate block?',
+        ordinance: 'Henderson Title 19.7.5',
+      },
+      'Gatlinburg, TN': {
+        specifics: "I need to confirm if this property is within the 'Overnight Rental' overlay and if the current zoning (e.g. R-2, C-2) allows for short-term rental permits without an HOA variance.",
+        ordinance: 'Sevier County Overnight Rental Overlay',
+      },
+      'Maryville, TN': {
+        specifics: "I'm looking for a property with zero restrictive covenants. Specifically, I need to verify there are no prohibitions on RV parking or the construction of a detached workshop/garage.",
+        ordinance: 'Blount County Land Use',
+      },
+    };
+
+    const QUICK_LINKS = [
+      { title: 'Henderson STR Map',  href: 'https://www.cityofhenderson.com/government/departments/community-development/short-term-rentals', desc: 'Verify 1,000ft separation rule' },
+      { title: 'Sevier County GIS',  href: 'http://www.seviercountytn.gov/government/assessor_of_property/index.php',                            desc: 'Check Gatlinburg R-2/C-2 Zoning' },
+      { title: 'Blount County Deeds', href: 'https://blounttn.org/272/Register-of-Deeds',                                                          desc: 'Pull Maryville Warranty Deeds' },
+    ];
+
+    const STORAGE_KEY = 'no-hoa-tracker:agent-email';
+    const state = Object.assign(
+      { region: 'Henderson, NV', address: '', agentName: '', agentEmail: '' },
+      JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}')
+    );
+
+    const $ = id => document.getElementById(id);
+
+    function renderRegions() {
+      const wrap = $('region-buttons');
+      wrap.innerHTML = '';
+      Object.keys(REGIONS).forEach(r => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'ae-region-btn' + (state.region === r ? ' active' : '');
+        btn.textContent = r.split(',')[0];
+        btn.addEventListener('click', () => { state.region = r; persist(); render(); });
+        wrap.appendChild(btn);
+      });
+    }
+
+    function renderLinks() {
+      $('quick-links').innerHTML = QUICK_LINKS.map(l => `
+        <a class="ae-link-box" href="${l.href}" target="_blank" rel="noopener">
+          <h3>${l.title} ↗</h3>
+          <p>${l.desc}</p>
+        </a>
+      `).join('');
+    }
+
+    function buildDraft() {
+      const greeting = state.agentName ? `Hi ${state.agentName},` : 'Hi there,';
+      const body = `${greeting}\n\nI'm inquiring about your listing at ${state.address || '[Property Address]'}.\n\nI am looking for a property with absolutely no mandatory HOA. Can you definitively confirm if there are any active Homeowners Associations, Special Assessment Districts (LID/SID), or shared road maintenance agreements?\n\nFurthermore, ${REGIONS[state.region].specifics}\n\nIf you have a copy of the Warranty Deed or the CC&Rs handy, would you mind forwarding those over? I'd like to perform my due diligence on the restrictive covenants before we move forward with an offer.\n\nBest regards,`;
+      return {
+        subject: `Inquiry: ${state.address || 'Property'} - HOA & Rental Eligibility`,
+        body,
+      };
+    }
+
+    function render() {
+      renderRegions();
+      $('address').value = state.address;
+      $('agent-name').value = state.agentName;
+      $('agent-email').value = state.agentEmail;
+      const draft = buildDraft();
+      $('preview-subject').textContent = draft.subject;
+      $('preview-body').textContent = draft.body;
+      $('mailto').href = `mailto:${encodeURIComponent(state.agentEmail)}?subject=${encodeURIComponent(draft.subject)}&body=${encodeURIComponent(draft.body)}`;
+      $('hint').textContent = `Opens your default mail app with the tailored ${state.region} template.`;
+    }
+
+    function persist() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    $('address').addEventListener('input', e => { state.address = e.target.value; persist(); render(); });
+    $('agent-name').addEventListener('input', e => { state.agentName = e.target.value; persist(); render(); });
+    $('agent-email').addEventListener('input', e => { state.agentEmail = e.target.value; persist(); render(); });
+    $('copy-btn').addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(buildDraft().body);
+        $('copy-btn').textContent = 'Copied!';
+        setTimeout(() => { $('copy-btn').textContent = 'Copy Text'; }, 1500);
+      } catch {
+        alert('Clipboard write failed — select the text and copy manually.');
+      }
+    });
+
+    renderLinks();
+    render();
+  </script>
+</body>
+</html>
