@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Install Redfin → Tracker bookmarklet</title>
+<link rel="stylesheet" href="styles.css" />
+<style>
+  .container { max-width: 720px; margin: 0 auto; padding: 32px 24px; }
+  .install-box { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin: 24px 0; }
+  .bookmarklet-link { display: inline-block; padding: 12px 20px; background: var(--accent); color: #fff !important; border-radius: 8px; font-weight: 600; text-decoration: none; cursor: grab; }
+  .bookmarklet-link:hover { background: var(--accent-hover); text-decoration: none; }
+  ol li { margin-bottom: 8px; }
+  .config { display: flex; gap: 8px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
+  .config input { flex: 1; min-width: 240px; background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 8px 10px; border-radius: 6px; font-size: 14px; }
+  pre { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px; overflow-x: auto; font-size: 12px; line-height: 1.4; }
+  .back { color: var(--text-dim); font-size: 14px; }
+</style>
+</head>
+<body>
+  <div class="container">
+    <a href="index.html" class="back">← back to tracker</a>
+    <h1>Redfin → Tracker bookmarklet</h1>
+    <p>One-click capture of any Redfin listing into your tracker.</p>
+
+    <div class="install-box">
+      <h2>Step 1 — Set your tracker URL</h2>
+      <p>Where the tracker is reachable in your browser. Bookmarklets can only open <code>http://</code> or <code>https://</code> URLs (not <code>file://</code>), so run a local server:</p>
+      <pre>cd /Users/foster/Projects/no-hoa-tracker &amp;&amp; python3 -m http.server 8000</pre>
+      <div class="config">
+        <input id="tracker-url" type="url" value="http://localhost:8000/index.html" />
+        <button id="rebuild" class="primary">Rebuild bookmarklet</button>
+      </div>
+    </div>
+
+    <div class="install-box">
+      <h2>Step 2 — Drag this to your bookmarks bar</h2>
+      <p><a id="bookmarklet" class="bookmarklet-link" href="#">+ to No-HOA Tracker</a></p>
+      <p class="quick-hint">Drag the button above into your browser's bookmarks bar. (Right-click → "Add to bookmarks" works too.)</p>
+    </div>
+
+    <div class="install-box">
+      <h2>Step 3 — Use it</h2>
+      <ol>
+        <li>Open any Redfin listing detail page (e.g. <code>redfin.com/NV/Henderson/123-Main-St/home/12345678</code>)</li>
+        <li>Click the bookmarklet</li>
+        <li>The tracker opens in a new tab with the form pre-filled — review, tweak, save</li>
+      </ol>
+      <p class="quick-hint">Scraped fields: address, city, state, price, beds, baths, sqft, lot size, year built, MLS#, HOA status, URL. Anything missing, fill in by hand. The dedup check will warn you if you've already tracked the same MLS#.</p>
+    </div>
+
+    <details class="install-box">
+      <summary style="cursor:pointer;font-weight:600;">View source</summary>
+      <pre id="source-view"></pre>
+    </details>
+  </div>
+
+  <script>
+    const SOURCE = `(function(){var TRACKER_URL='__TRACKER_URL__';var text=document.body.innerText||'';function pickRegex(re,group){group=group||1;var m=text.match(re);return m?m[group].trim():null}function num(s){if(s==null)return null;var v=parseFloat(String(s).replace(/[^\\d.]/g,''));return Number.isFinite(v)?v:null}function tryQS(selectors){for(var i=0;i<selectors.length;i++){var el=document.querySelector(selectors[i]);if(el&&el.textContent.trim())return el.textContent.trim()}return null}var address=tryQS(['[data-rf-test-id="abp-streetLine"]','.street-address','h1.homeAddress','h1']);var priceText=tryQS(['[data-rf-test-id="abp-price"] .statsValue','[data-rf-test-id="abp-price"]','.statsValue.price','.price']);var price=num(priceText);var beds=num(tryQS(['[data-rf-test-id="abp-beds"] .statsValue','.beds-section .statsValue']));var baths=num(tryQS(['[data-rf-test-id="abp-baths"] .statsValue','.baths-section .statsValue']));var sqft=num(tryQS(['[data-rf-test-id="abp-sqFt"] .statsValue','.sqft-section .statsValue']));var mls=pickRegex(/MLS\\s*#?\\s*[:#]?\\s*([A-Z0-9-]+)/i);var yearBuilt=num(pickRegex(/Year Built[:\\s]+(\\d{4})/i));var lotSize=(function(){var acres=pickRegex(/Lot Size[:\\s]+([\\d.,]+)\\s*Acres/i);if(acres)return parseFloat(acres.replace(/,/g,''));var sq=pickRegex(/Lot Size[:\\s]+([\\d.,]+)\\s*Sq/i);if(sq)return Math.round((parseFloat(sq.replace(/,/g,''))/43560)*100)/100;return null})();var hoaMatch=text.match(/HOA[^.\\n]{0,40}?(\\$[\\d,]+|None|No HOA|0\\b)/i);var hoaConfirmed='unverified';if(hoaMatch){var v=hoaMatch[0].toLowerCase();if(v.indexOf('none')>-1||v.indexOf('no hoa')>-1||/\\$0\\b/.test(v)||/ 0\\b/.test(v)){hoaConfirmed='yes'}else if(/\\$[1-9]/.test(v)){hoaConfirmed='has-hoa'}}var city=null,state=null;var cityStateMatch=text.match(/,\\s*([A-Za-z .'-]+),\\s*([A-Z]{2})\\s*\\d{5}/);if(cityStateMatch){city=cityStateMatch[1].trim();state=cityStateMatch[2]}var data={address:address||'',city:city||'',state:state||'',price:price||null,beds:beds,baths:baths,sqft:sqft,lotSize:lotSize,yearBuilt:yearBuilt,mls:mls||'',url:location.href,hoaConfirmed:hoaConfirmed,notes:''};var payload=btoa(unescape(encodeURIComponent(JSON.stringify(data))));window.open(TRACKER_URL+'#add='+payload,'_blank')})();`;
+
+    function build() {
+      const url = document.getElementById('tracker-url').value.trim() || 'http://localhost:8000/index.html';
+      const code = SOURCE.replace('__TRACKER_URL__', url.replace(/'/g, "\\'"));
+      const href = 'javascript:' + encodeURIComponent(code);
+      document.getElementById('bookmarklet').href = href;
+      document.getElementById('source-view').textContent = code;
+    }
+    document.getElementById('rebuild').addEventListener('click', build);
+    document.getElementById('tracker-url').addEventListener('input', build);
+    build();
+  </script>
+</body>
+</html>

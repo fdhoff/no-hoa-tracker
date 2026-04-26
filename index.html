@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>No-HOA Home Tracker</title>
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header>
+    <div class="header-row">
+      <div>
+        <h1>No-HOA Home Tracker</h1>
+        <p class="subtitle">MLS-backed via Redfin &middot; works anywhere in the US</p>
+      </div>
+      <div id="backend-status" class="backend-status"></div>
+    </div>
+  </header>
+
+  <section class="quick-bar">
+    <div class="quick-search">
+      <span class="quick-label">Browse on Redfin:</span>
+      <div id="pinned-regions" class="pinned-regions"></div>
+      <select id="state-jump">
+        <option value="">Jump to state…</option>
+      </select>
+      <span class="quick-hint">→ apply HOA Fee max = $0 in Redfin filters</span>
+      <a class="quick-link" href="bookmarklet.html">⚡ Install bookmarklet</a>
+    </div>
+    <div class="mls-lookup">
+      <input id="mls-lookup" type="search" placeholder="Already checked? Paste MLS# or Redfin URL..." />
+      <div id="mls-lookup-result" class="lookup-result"></div>
+    </div>
+  </section>
+
+  <section class="controls">
+    <div class="filters">
+      <label>
+        State
+        <select id="filter-state">
+          <option value="all">All</option>
+        </select>
+      </label>
+      <label>
+        Status
+        <select id="filter-status">
+          <option value="all">All</option>
+          <option value="reviewed">Reviewed</option>
+          <option value="interested">Interested</option>
+          <option value="contacted">Contacted</option>
+          <option value="viewed">Viewed in Person</option>
+          <option value="offer">Offer Made</option>
+          <option value="under-contract">Under Contract</option>
+          <option value="passed">Passed</option>
+        </select>
+      </label>
+      <label>
+        Sort
+        <select id="sort-by">
+          <option value="dateAdded-desc">Newest First</option>
+          <option value="lastChecked-desc">Recently Checked</option>
+          <option value="dateAdded-asc">Oldest First</option>
+          <option value="price-asc">Price: Low to High</option>
+          <option value="price-desc">Price: High to Low</option>
+          <option value="sqft-desc">Sqft: High to Low</option>
+          <option value="pricePerSqft-asc">$/Sqft: Low to High</option>
+        </select>
+      </label>
+      <input id="search" type="search" placeholder="Search address, city, notes, MLS..." />
+    </div>
+    <div class="actions">
+      <button id="add-btn" class="primary">+ Add Listing</button>
+      <button id="migrate-btn" hidden>Sync localStorage →</button>
+      <button id="export-json">Export JSON</button>
+      <button id="export-csv">Export CSV</button>
+      <button id="import-btn">Import JSON</button>
+      <input id="import-file" type="file" accept="application/json" hidden />
+    </div>
+  </section>
+
+  <section class="stats" id="stats"></section>
+
+  <section class="listings" id="listings"></section>
+
+  <div class="modal" id="modal" hidden>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="modal-title">Add Listing</h2>
+        <button class="close" id="modal-close">&times;</button>
+      </div>
+      <form id="listing-form">
+        <input type="hidden" id="listing-id" />
+        <div class="grid">
+          <label class="full">
+            MLS # <span class="hint">(canonical ID — used for dedup)</span>
+            <input type="text" id="mls" placeholder="e.g. 2645123" />
+          </label>
+          <label class="full">
+            Address
+            <input type="text" id="address" required placeholder="123 Main St" />
+          </label>
+          <label>
+            City
+            <input type="text" id="city" placeholder="Henderson" />
+          </label>
+          <label>
+            State
+            <select id="state" required></select>
+          </label>
+          <label>
+            Status
+            <select id="status">
+              <option value="reviewed">Reviewed</option>
+              <option value="interested">Interested</option>
+              <option value="contacted">Contacted</option>
+              <option value="viewed">Viewed in Person</option>
+              <option value="offer">Offer Made</option>
+              <option value="under-contract">Under Contract</option>
+              <option value="passed">Passed</option>
+            </select>
+          </label>
+          <label>
+            HOA Confirmed?
+            <select id="hoaConfirmed">
+              <option value="yes">Yes — no HOA</option>
+              <option value="unverified">Unverified</option>
+              <option value="has-hoa">Has HOA</option>
+            </select>
+          </label>
+          <label>
+            Price ($)
+            <input type="number" id="price" min="0" step="1000" />
+          </label>
+          <label>
+            Beds
+            <input type="number" id="beds" min="0" step="1" />
+          </label>
+          <label>
+            Baths
+            <input type="number" id="baths" min="0" step="0.5" />
+          </label>
+          <label>
+            Sqft
+            <input type="number" id="sqft" min="0" step="1" />
+          </label>
+          <label>
+            Lot Size (acres)
+            <input type="number" id="lotSize" min="0" step="0.01" />
+          </label>
+          <label>
+            Year Built
+            <input type="number" id="yearBuilt" min="1800" max="2030" step="1" />
+          </label>
+          <label class="full">
+            Redfin / Listing URL
+            <input type="url" id="url" placeholder="https://www.redfin.com/..." />
+          </label>
+          <label class="full">
+            Notes
+            <textarea id="notes" rows="4" placeholder="Roof age, well/septic, condition, neighborhood notes..."></textarea>
+          </label>
+        </div>
+        <div class="form-actions">
+          <button type="button" id="delete-btn" class="danger" hidden>Delete</button>
+          <button type="button" id="cancel-btn">Cancel</button>
+          <button type="submit" class="primary">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
