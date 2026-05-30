@@ -1,0 +1,4 @@
+interface:
+  display_name: "STR Cap Rate Underwriting"
+  short_description: "Clean STR cap-rate comparisons."
+  default_prompt: "Compare these STR properties using clean underwriting numbers and cap-rate ranges."
