@@ -22,9 +22,13 @@ This protocol ensures 100% verification of HOA status and Short-Term Rental (STR
 
 ### **Henderson, NV (Clark County)**
 *   **The Deed**: [Clark County Recorder](https://recorder.clarkcountynv.gov/)
-*   **The Map**: [City of Henderson STR Boundary Map](https://www.cityofhenderson.com/government/departments/community-development/short-term-rentals)
+*   **The Map**: [City of Henderson STVR Page](https://www.cityofhenderson.com/government/departments/community-development-and-services/short-term-vacation-rentals) and [Registered STVR ArcGIS Map](https://hendersonnv.maps.arcgis.com/apps/webappviewer/index.html?id=cfcb445a82a34c0786b14eb100d8a04e)
     *   *Verification*: Search the address on this map. If it falls in a "Prohibited" zone or is within 1,000ft of another permit, it is NOT eligible regardless of HOA status.
-*   **The Code**: [Henderson Title 19.7.5](https://library.municode.com/nv/henderson/codes/code_of_ordinances) - Detailed STR regulations.
+    *   *Automation*: From the repo root, run `node .codex/skills/henderson-str-eligibility/scripts/check_henderson_str.cjs "ADDRESS, Henderson, NV"`.
+    *   *Caveat*: Henderson states the public map is informational and not the final eligibility determination for currently unregistered property. Final distance eligibility is determined during application review.
+*   **The Code**: Henderson Development Code section `19.9.4.F` / STVR Standards and Regulations.
+    *   *Multi-unit rule*: Unless mapped for individual ownership, dwelling units in a multi-unit dwelling structure cannot be used as STVRs. Do not rely on the map alone for duplexes, townhomes, condos, or other multi-unit structures.
+    *   *Multi-unit cap*: STVRs in a multi-unit dwelling structure or mixed-use building are limited to 10% of residential units, and each STVR requires a separate registration.
 
 ### **Gatlinburg / Sevierville, TN (Sevier County)**
 *   **The Deed**: [Sevier County Register of Deeds](https://www.seviercountytn.gov/government/register_of_deeds/index.php)

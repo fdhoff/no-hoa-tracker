@@ -7,10 +7,12 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
-    "scrape": "node scrape.js"
+    "scrape": "node scrape.js",
+    "enrich": "node enrich-descriptions.js"
   },
   "dependencies": {
     "better-sqlite3": "^11.3.0",
-    "express": "^4.21.0"
+    "express": "^4.21.0",
+    "playwright": "^1.59.1"
   }
 }

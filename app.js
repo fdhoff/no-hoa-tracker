@@ -34,6 +34,14 @@ const STATUS_LABELS = {
   passed: 'Passed',
 };
 
+const STR_SIGNAL_LABELS = {
+  proven: 'Proven STR income',
+  eligible: 'STR-eligible',
+  advertised: 'STR-advertised',
+  disqualified: 'No STR allowed',
+  unknown: 'STR unknown',
+};
+
 let listings = [];
 
 const els = {
@@ -41,6 +49,7 @@ const els = {
   stats: document.getElementById('stats'),
   filterState: document.getElementById('filter-state'),
   filterStatus: document.getElementById('filter-status'),
+  filterStr: document.getElementById('filter-str'),
   sortBy: document.getElementById('sort-by'),
   search: document.getElementById('search'),
   addBtn: document.getElementById('add-btn'),
@@ -176,14 +185,23 @@ function locationLabel(l) {
 function getFiltered() {
   const state = els.filterState.value;
   const status = els.filterStatus.value;
+  const str = els.filterStr ? els.filterStr.value : 'all';
   const q = els.search.value.trim().toLowerCase();
   const sort = els.sortBy.value;
 
   let result = listings.filter(l => {
     if (state !== 'all' && l.state !== state) return false;
     if (status !== 'all' && l.status !== status) return false;
+    if (str !== 'all') {
+      // 'eligible+' shorthand = proven OR eligible (the strong-signal bucket)
+      if (str === 'eligible+') {
+        if (l.strSignal !== 'proven' && l.strSignal !== 'eligible') return false;
+      } else if ((l.strSignal || 'unknown') !== str) {
+        return false;
+      }
+    }
     if (q) {
-      const hay = [l.address, l.city, l.state, l.notes, l.mls, l.url].filter(Boolean).join(' ').toLowerCase();
+      const hay = [l.address, l.city, l.state, l.notes, l.mls, l.url, l.strSnippet].filter(Boolean).join(' ').toLowerCase();
       if (!hay.includes(q)) return false;
     }
     return true;
@@ -298,6 +316,7 @@ function renderListings() {
         <div class="card-footer">
           <span class="badge badge-${l.status}">${STATUS_LABELS[l.status] || l.status}</span>
           <span class="hoa-flag hoa-${l.hoaConfirmed || 'unverified'}">${hoaLabel(l.hoaConfirmed)}</span>
+          ${l.strSignal ? `<span class="str-flag str-${l.strSignal}" title="${escapeHtml(l.strSnippet || '')}">${STR_SIGNAL_LABELS[l.strSignal] || l.strSignal}</span>` : ''}
           ${l.lastChecked ? `<span class="checked-date">checked ${fmtDate(l.lastChecked)}</span>` : ''}
         </div>
         <div class="card-actions" data-noedit>
@@ -588,9 +607,9 @@ els.deleteBtn.addEventListener('click', deleteListing);
 els.form.addEventListener('submit', handleSubmit);
 els.modal.addEventListener('click', e => { if (e.target === els.modal) closeModal(); });
 
-[els.filterState, els.filterStatus, els.sortBy, els.search].forEach(el =>
-  el.addEventListener('input', render)
-);
+[els.filterState, els.filterStatus, els.filterStr, els.sortBy, els.search].forEach(el => {
+  if (el) el.addEventListener('input', render);
+});
 
 els.mlsLookup.addEventListener('input', lookupMls);
 

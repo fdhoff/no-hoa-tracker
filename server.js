@@ -44,8 +44,11 @@ function ensureColumn(name, type) {
 ensureColumn('dom', 'INTEGER');
 ensureColumn('estRent', 'REAL');
 ensureColumn('roi', 'REAL');
+ensureColumn('strSignal', 'TEXT');
+ensureColumn('strSnippet', 'TEXT');
+ensureColumn('descFetched', 'INTEGER');
 
-const COLS = ['id', 'mls', 'address', 'city', 'state', 'status', 'price', 'beds', 'baths', 'sqft', 'lotSize', 'yearBuilt', 'url', 'hoaConfirmed', 'notes', 'dateAdded', 'lastChecked', 'dom', 'estRent', 'roi'];
+const COLS = ['id', 'mls', 'address', 'city', 'state', 'status', 'price', 'beds', 'baths', 'sqft', 'lotSize', 'yearBuilt', 'url', 'hoaConfirmed', 'notes', 'dateAdded', 'lastChecked', 'dom', 'estRent', 'roi', 'strSignal', 'strSnippet', 'descFetched'];
 
 const stmts = {
   list: db.prepare('SELECT * FROM listings ORDER BY dateAdded DESC'),
