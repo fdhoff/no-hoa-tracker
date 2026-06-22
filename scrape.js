@@ -21,7 +21,7 @@ const fs = require('fs');
 const CRITERIA = {
   minBeds: 3,
   maxBeds: 5,
-  minPrice: 250000,
+  minPrice: 100000,
   // No maxPrice — user wants any price as long as ROI math works.
 };
 
@@ -30,58 +30,48 @@ const CRITERIA = {
 // last as a catch-all for smaller metros not explicitly listed.
 const REGIONS = [
   // Nevada
-  { label: 'Henderson, NV',     region_id: 8147,  region_type: 6, max_homes: 350 },
+  { label: 'Henderson, NV', region_id: 8147, region_type: 6, max_homes: 350 },
+  // Pahrump (Nye Co., unincorporated, ~1hr from Henderson — STR-permissive alt to Clark Co.). Zip IDs resolved 2026-06-22.
+  { label: 'Pahrump, NV (89048)', region_id: 37244, region_type: 2, max_homes: 350 },
+  { label: 'Pahrump N, NV (89060)', region_id: 37248, region_type: 2, max_homes: 350 },
 
-  // Tennessee — Mountain Cabin Markets (High STR Yield)
-  { label: 'Sevierville, TN',   region_id: 17315, region_type: 6, max_homes: 350 },
-  { label: 'Gatlinburg, TN',    region_id: 7311,  region_type: 6, max_homes: 350 },
-  { label: 'Pigeon Forge, TN',  region_id: 14931, region_type: 6, max_homes: 350 },
-
-  // Tennessee — major metros
-  { label: 'Nashville, TN',     region_id: 13415, region_type: 6, max_homes: 350 },
-  { label: 'Knoxville, TN',     region_id: 10200, region_type: 6, max_homes: 350 },
-  { label: 'Memphis, TN',       region_id: 12260, region_type: 6, max_homes: 350 },
-  { label: 'Chattanooga, TN',   region_id: 3641,  region_type: 6, max_homes: 350 },
-  { label: 'Murfreesboro, TN',  region_id: 13284, region_type: 6, max_homes: 350 },
-  { label: 'Clarksville, TN',   region_id: 3918,  region_type: 6, max_homes: 350 },
-
-  // Tennessee — Nashville metro suburbs
-  { label: 'Franklin, TN',      region_id: 7080,  region_type: 6, max_homes: 350 },
-  { label: 'Spring Hill, TN',   region_id: 18036, region_type: 6, max_homes: 350 },
-  { label: 'Brentwood, TN',     region_id: 2149,  region_type: 6, max_homes: 350 },
-  { label: 'Hendersonville, TN',region_id: 8509,  region_type: 6, max_homes: 350 },
-  { label: 'Mount Juliet, TN',  region_id: 13070, region_type: 6, max_homes: 350 },
-  { label: 'Smyrna, TN',        region_id: 17754, region_type: 6, max_homes: 350 },
-  { label: 'Lebanon, TN',       region_id: 10584, region_type: 6, max_homes: 350 },
-  { label: 'Gallatin, TN',      region_id: 7278,  region_type: 6, max_homes: 350 },
-  { label: 'Nolensville, TN',   region_id: 13801, region_type: 6, max_homes: 350 },
-  { label: 'Columbia, TN',      region_id: 4308,  region_type: 6, max_homes: 350 },
-
-  // Tennessee — Memphis metro suburbs
-  { label: 'Collierville, TN',  region_id: 4272,  region_type: 6, max_homes: 350 },
-  { label: 'Germantown, TN',    region_id: 7371,  region_type: 6, max_homes: 350 },
+  // Texas
+  { label: 'Abilene, TX (79605)', region_id: 34847, region_type: 1, max_homes: 350, market: 'texas' },
 
   // Tennessee — East TN
-  { label: 'Maryville, TN',     region_id: 11830, region_type: 6, max_homes: 350 },
-  { label: 'Johnson City, TN',  region_id: 9725,  region_type: 6, max_homes: 350 },
+  { label: 'Maryville, TN',  region_id: 11830, region_type: 6, max_homes: 350 },
+  // Gatlinburg city ID 7311 was recycled to Garland, TN; use zipcode 37738 instead.
+  { label: 'Gatlinburg, TN (37738)',  region_id: 15973, region_type: 2, max_homes: 350 },
+  { label: 'Pigeon Forge, TN (37863)', region_id: 16041, region_type: 2, max_homes: 350 },
+  // Tier A Smokies deepening (unincorporated Sevier/Cocke Co. — STR by-right w/ permit). Zip region IDs resolved 2026-06-21.
+  { label: 'Sevierville/Wears Valley, TN (37862)', region_id: 16040, region_type: 2, max_homes: 350 },
+  { label: 'Townsend, TN (37882)', region_id: 16059, region_type: 2, max_homes: 350 },
+  { label: 'Cosby, TN (37722)', region_id: 15961, region_type: 2, max_homes: 350 },
+  { label: 'Newport, TN (37821)', region_id: 16016, region_type: 2, max_homes: 350 },
+  { label: 'Kodak, TN (37764)', region_id: 15988, region_type: 2, max_homes: 350 },
+  { label: 'Tennessee (state)', region_id: 34, region_type: 4, max_homes: 350 },
 
-  // Catch-all for any TN markets not covered above (Cookeville, Jackson,
-  // Kingsport, Bristol, Cleveland, etc.) — caps at 350 statewide.
-  { label: 'Tennessee (state)', region_id: 34,    region_type: 4, max_homes: 350 },
+  // North Carolina — Smokies/GSMNP NC gateway (same park demand & drive radius as the TN side). Zip IDs resolved 2026-06-22.
+  { label: 'Bryson City, NC (28713)', region_id: 11738, region_type: 2, max_homes: 350 },
+  { label: 'Maggie Valley, NC (28751)', region_id: 11776, region_type: 2, max_homes: 350 },
+  { label: 'Waynesville, NC (28786)', region_id: 11807, region_type: 2, max_homes: 350 },
 ];
+
 
 const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15';
 
 const DB_PATH = process.env.DB_PATH || path.join(__dirname, 'data', 'listings.db');
 
-async function fetchRegion({ region_id, region_type, max_homes }) {
+async function fetchRegion({ region_id, region_type, max_homes, market }) {
   const url = new URL('https://www.redfin.com/stingray/api/gis');
   url.searchParams.set('al', '1');
   url.searchParams.set('num_homes', String(max_homes));
   url.searchParams.set('region_id', String(region_id));
   url.searchParams.set('region_type', String(region_type));
+  if (market) url.searchParams.set('market', market);
   url.searchParams.set('status', '9');
-  url.searchParams.set('uipt', '1,2,3,4,5,6,7,8');
+  // uipt 7 = mobile/manufactured. Excluded — see passesCriteria for the post-filter.
+  url.searchParams.set('uipt', '1,2,3,4,5,6,8');
   url.searchParams.set('v', '8');
   // Redfin filter syntax in URL params (best-effort — server post-filters anyway):
   url.searchParams.set('min_price', String(CRITERIA.minPrice));
@@ -107,6 +97,8 @@ function passesCriteria(home) {
   // Reject listings with explicit HOA > 0. Listings without an `hoa` field stay (unverified).
   const hoaValue = home.hoa && typeof home.hoa.value === 'number' ? home.hoa.value : null;
   if (hoaValue != null && hoaValue > 0) return false;
+  // Reject mobile/manufactured homes — not viable as STVR (permitting, financing, insurance).
+  if (home.uiPropertyType === 7) return false;
   return true;
 }
 
@@ -129,6 +121,11 @@ function mapHome(home, regionLabel) {
   if (state === 'TN' && beds && price) {
     estRent = beds * 25000;
     const netIncome = estRent * 0.55; // 45% OpEx
+    roi = Math.round((netIncome / price) * 1000) / 10;
+  } else if (state === 'TX' && beds && price) {
+    // Abilene heuristic: slightly lower gross but much lower entry price
+    estRent = beds * 15000; 
+    const netIncome = estRent * 0.60; // 40% OpEx (lower than mountain cabins)
     roi = Math.round((netIncome / price) * 1000) / 10;
   }
 
@@ -166,7 +163,7 @@ async function main() {
       id TEXT PRIMARY KEY, mls TEXT, address TEXT, city TEXT, state TEXT, status TEXT,
       price REAL, beds REAL, baths REAL, sqft REAL, lotSize REAL, yearBuilt INTEGER,
       url TEXT, hoaConfirmed TEXT, notes TEXT, dateAdded INTEGER, lastChecked INTEGER,
-      dom INTEGER, estRent REAL, roi REAL
+      dom INTEGER, estRent REAL, roi REAL, strSignal TEXT, strSnippet TEXT, descFetched INTEGER
     );
   `);
   // Best-effort migration for older DBs created by an earlier scrape.
@@ -174,16 +171,21 @@ async function main() {
   if (!cols.includes('dom')) db.exec('ALTER TABLE listings ADD COLUMN dom INTEGER');
   if (!cols.includes('estRent')) db.exec('ALTER TABLE listings ADD COLUMN estRent REAL');
   if (!cols.includes('roi')) db.exec('ALTER TABLE listings ADD COLUMN roi REAL');
+  if (!cols.includes('strSignal')) db.exec('ALTER TABLE listings ADD COLUMN strSignal TEXT');
+  if (!cols.includes('strSnippet')) db.exec('ALTER TABLE listings ADD COLUMN strSnippet TEXT');
+  if (!cols.includes('descFetched')) db.exec('ALTER TABLE listings ADD COLUMN descFetched INTEGER');
 
   // Clean up auto-imported listings that the user hasn't engaged with yet.
   // This drops anything previously scraped that no longer matches the new
   // criteria — but preserves anything the user has touched (status changed
-  // from 'reviewed', or notes edited away from the auto-imported template).
+  // from 'reviewed', notes edited away from the auto-imported template, or
+  // we've already invested an enrichment fetch in classifying it).
   const purged = db.prepare(`
     DELETE FROM listings
     WHERE id LIKE 'redfin:%'
       AND status = 'reviewed'
       AND notes LIKE 'Auto-imported%'
+      AND strSignal IS NULL
   `).run();
   if (purged.changes) console.log(`Purged ${purged.changes} stale auto-imports before re-scrape.`);
 
@@ -221,6 +223,7 @@ async function main() {
         // Skip if an MLS-matched row exists under a different id (e.g. user added it manually).
         if (r.mls && mlsToId.has(r.mls) && mlsToId.get(r.mls) !== r.id) continue;
         const before = db.prepare('SELECT id FROM listings WHERE id = ?').get(r.id);
+        console.log(`Inserting: ${r.id} | ${r.city} | ${r.state} | ${r.price}`);
         insertNew.run(r);
         if (before) updated++; else inserted++;
         if (r.mls) mlsToId.set(r.mls, r.id);
