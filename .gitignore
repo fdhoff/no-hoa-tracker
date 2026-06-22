@@ -5,3 +5,12 @@ data/
 *.db-wal
 *.db-shm
 .DS_Store
+
+# Eligibility-check screenshots (debug artifacts)
+check-*.png
+
+# Agent tooling — not part of the app
+.gemini/
+.codex/
+.goosehints
+.aider.conf.yml
